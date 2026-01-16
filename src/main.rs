@@ -21,7 +21,7 @@ fn main() {
                 let response_lines = content.lines().collect::<Vec<&str>>();
                 println!("{}", response_lines[0]);
 
-                let response_content = match response_lines[0] {
+                let response_content = match response_lines[0].trim_end() {
                     "GET /test HTTP/1.1" => test_server_running(),
                     "GET /esp_alive HTTP/1.1" => is_esp_up(),
                     "GET /esp_alive/ HTTP/1.1" => is_esp_up(),
