@@ -63,8 +63,10 @@ fn esp_toggle_power() -> String {
         Some(address) => {
             let url = format!("http://{}/balls", address);
             println!("{url}");
-            reqwest::blocking::get(url).unwrap();
-            "HTTP/1.1 200 Ok \r\n\r\n command issued".to_string()
+            match reqwest::blocking::get(url) {
+                Ok(_) => "HTTP/1.1 200 Ok \r\n\r\n command issued".to_string(),
+                Err(_) => "HTTP/1.1 418 I'm a teapot \r\n\r\n command probably issued".to_string(),
+            }
         }
     };
 }
