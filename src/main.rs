@@ -23,10 +23,12 @@ fn main() {
 
                 let response_content = match response_lines[0].trim_end() {
                     "GET /test HTTP/1.1" => test_server_running(),
+                    "GET /test HTTP/1.0" => test_server_running(),
+
                     "GET /esp_alive HTTP/1.1" => is_esp_up(),
-                    "GET /esp_alive/ HTTP/1.1" => is_esp_up(),
+                    "GET /esp_alive HTTP/1.0" => is_esp_up(),
                     "GET /esp_toggle HTTP/1.1" => esp_toggle_power(),
-                    "GET /esp_toggle/ HTTP/1.1" => esp_toggle_power(),
+                    "GET /esp_toggle HTTP/1.0" => esp_toggle_power(),
                     _ => generic(),
                 };
                 if let Err(_) = conn.write(response_content.as_bytes()) {
