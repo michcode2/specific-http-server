@@ -1,10 +1,10 @@
 use std::{
     io::{Read, Write},
-    net::TcpListener,
+    net::{IpAddr, Ipv4Addr, TcpListener},
     time::Duration,
 };
 
-use ping_rs::{PingOptions, send_ping};
+use ping_rs::send_ping;
 
 fn main() {
     let socket: TcpListener = TcpListener::bind("0.0.0.0:3334").unwrap();
@@ -15,7 +15,6 @@ fn main() {
             if let Err(_) = conn.read(&mut buffer) {
                 println!("error reading from connection");
             }
-            println!("{:?}", buffer);
             if let Ok(content) = String::from_utf8(buffer) {
                 println!("{content}");
                 let response_lines = content.lines().collect::<Vec<&str>>();
@@ -46,7 +45,13 @@ fn main() {
 
 fn is_esp_up() -> String {
     return match get_esp_address() {
-        Some(_) => "HTTP/1.1 200 Ok\r\n\r\nthe esp is alive and present!".to_string(),
+        Some(addr) => {
+            let request_url = format!("http://{}/", addr);
+            match reqwest::blocking::get(request_url) {
+                Ok(_) => "HTTP/1.1 200 Ok\r\n\r\nthe esp is alive and present!".to_string(),
+                Err(_) => "HTTP/1.1 503 Service Unavailable\r\n\r\nip address present but http server not running???".to_string(),
+            }
+        }
         None => {
             "HTTP/1.1 503 Service Unavailable\r\n\r\ncould not find the esp at known addresses :("
                 .to_string()
@@ -71,23 +76,15 @@ fn esp_toggle_power() -> String {
     };
 }
 
-fn get_esp_address() -> Option<String> {
+fn get_esp_address() -> Option<Ipv4Addr> {
+    let default_ip = Ipv4Addr::new(192, 168, 0, 14);
     if let Ok(_) = send_ping(
-        &"192.168.0.14".parse().unwrap(),
+        &IpAddr::V4(default_ip),
         Duration::from_secs(1),
         &[1_u8],
         None,
     ) {
-        return Some("192.168.0.14".to_string());
-    }
-
-    if let Ok(_) = send_ping(
-        &"pcturnon.local".parse().unwrap(),
-        Duration::from_secs(1),
-        &[1_u8],
-        None,
-    ) {
-        return Some("pcturnon.local".to_string());
+        return Some(default_ip);
     }
     None
 }
